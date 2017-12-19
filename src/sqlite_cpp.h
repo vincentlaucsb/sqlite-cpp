@@ -124,7 +124,13 @@ namespace SQLite {
             }
 
             template<>
-            void bind(const size_t i, double value) {
+            inline void bind(const size_t i, const long long int value) {
+                /** Bind integer values to the statement */
+                sqlite3_bind_int64(this->get_ptr(), i + 1, value);
+            }
+
+            template<>
+            inline void bind(const size_t i, const double value) {
                 /** Bind floating point values to the statement */
                 sqlite3_bind_double(this->get_ptr(), i + 1, value);
             }

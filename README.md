@@ -13,6 +13,9 @@ wrangling with pointers? That's because this library does it all behind the scen
 in a memory-safe, low overhead way using C++ features such as RAII and smart pointers.
 
 ```
+include <vector>
+include "sqlite_cpp.h"
+
 int main() {
     SQLite::Conn db("database.sqlite");
     db.exec("CREATE TABLE dillydilly (Player TEXT, Touchdown int, Interception int)");
