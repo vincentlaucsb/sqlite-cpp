@@ -4,6 +4,14 @@
 *.o
 *.obj
 
+# Visual Studio
+.vs/
+*.sln
+*.vcx*
+*.*log
+*.ilk
+*.pdb
+
 # Precompiled Headers
 *.gch
 *.pch
