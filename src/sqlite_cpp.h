@@ -1,6 +1,7 @@
 /** @file */
 
 #include "sqlite3.h"
+#include <string.h>
 #include <map>
 #include <queue>
 #include <vector>
@@ -10,6 +11,46 @@
 /** @SQLite
  */
 namespace SQLite {
+    /** @name Errors
+     *  Classes for various runtime errors
+     */
+    ///@{
+    /** Thrown when attempting to use the interface of a close()'d database */
+    class DatabaseClosed : public std::runtime_error {
+    public:
+        DatabaseClosed() :runtime_error("Attempted operation on a closed database.") {};
+    };
+
+    /** Thrown when attempting to use the interface of a close()'d statement */
+    class StatementClosed : public std::runtime_error {
+    public:
+        StatementClosed() :runtime_error("Attempted operation on a closed statement.") {};
+    };
+
+    /** Used when invalid inputs are used */
+    class ValueError : public std::runtime_error {
+    public:
+        ValueError() :runtime_error("[Value Error] Invalid value or value(s).") {};
+        ValueError(const std::string& msg) :runtime_error("[Value Error] " + msg) {};
+    };
+
+    /** Used for errors returned by the SQLite API itself */
+    class SQLiteError : public std::runtime_error {
+    public:
+        SQLiteError(const std::string& msg) :runtime_error("[SQLite Error] " + msg) {};
+    };
+
+    /** Map error codes to error messages */
+    const std::map<int, std::string> SQLITE_ERROR_MSG = {
+        { 1, "SQLITE_ERROR: Generic SQLite Error" },
+        { 19, "SQLITE_CONSTRAINT: SQL constrainted violated" }
+    };
+
+    const std::map<int, std::string> SQLITE_EXT_ERROR_MSG = {
+        { 787, "SQLITE_CONSTRAINT_FOREIGNKEY: Foreign key constraint failed" },
+        { 1555, "SQLITE_CONSTRAINT_PRIMARYKEY: Primary key constraint failed" }
+    };
+    
     /** Wrapper over a sqlite3 pointer */
     struct conn_base {
     public:
@@ -58,10 +99,10 @@ namespace SQLite {
         class PreparedStatement {
         public:
             PreparedStatement(Conn& conn, const std::string& stmt);
-            template<typename... Args>
             
             /** @name Binding Values */
             ///@{
+            template<typename... Args>
             void bind(Args... args) {
                 /** Bind any number of arguments to the statement and
                  *  automatically call next()
@@ -82,57 +123,7 @@ namespace SQLite {
 
             template<typename T>
             void bind(const size_t i, const T value) {
-                static_assert(false, "Cannot call bind() on values of this type. Supported types are:"
-                    " char *, string, int, long int, and double.");
-            }
-
-            template<>
-            inline void bind(const size_t i, const char* value) {
-                sqlite3_bind_text(
-                    this->get_ptr(),    // Pointer to prepared statement
-                    i + 1,              // Index of parameter to set
-                    value,              // Value to bind
-                    strlen(value),      // Size of string in bytes
-                    SQLITE_TRANSIENT);  // String destructor
-            }
-
-            template<>
-            inline void bind(const size_t i, const std::string value) {
-                /** Bind text values to the statement
-                *
-                *  **Note:** This function is zero-indexed while
-                *  sqlite3_bind_* is 1-indexed
-                */
-                sqlite3_bind_text(
-                    this->get_ptr(),    // Pointer to prepared statement
-                    i + 1,              // Index of parameter to set
-                    value.c_str(),      // Value to bind
-                    value.size(),       // Size of string in bytes
-                    SQLITE_TRANSIENT);  // String destructor
-            }
-
-            template<>
-            inline void bind(const size_t i, const int value) {
-                /** Bind integer values to the statement */
-                sqlite3_bind_int(this->get_ptr(), i + 1, value);
-            }
-
-            template<>
-            inline void bind(const size_t i, const long int value) {
-                /** Bind integer values to the statement */
-                sqlite3_bind_int64(this->get_ptr(), i + 1, value);
-            }
-
-            template<>
-            inline void bind(const size_t i, const long long int value) {
-                /** Bind integer values to the statement */
-                sqlite3_bind_int64(this->get_ptr(), i + 1, value);
-            }
-
-            template<>
-            inline void bind(const size_t i, const double value) {
-                /** Bind floating point values to the statement */
-                sqlite3_bind_double(this->get_ptr(), i + 1, value);
+                bind<T>(i, value);
             }
             ///@}
 
@@ -193,47 +184,56 @@ namespace SQLite {
                                                *  so we can dealloc them on close() */
     };
 
-    /** @name Errors
-     *  Classes for various runtime errors
-     */
-    ///@{
-    /** Thrown when attempting to use the interface of a close()'d database */
-    class DatabaseClosed : public std::runtime_error {
-    public:
-        DatabaseClosed() :runtime_error("Attempted operation on a closed database.") {};
-    };
-
-    /** Thrown when attempting to use the interface of a close()'d statement */
-    class StatementClosed : public std::runtime_error {
-    public:
-        StatementClosed() :runtime_error("Attempted operation on a closed statement.") {};
-    };
-
-    /** Used when invalid inputs are used */
-    class ValueError : public std::runtime_error {
-    public:
-        ValueError() :runtime_error("[Value Error] Invalid value or value(s).") {};
-        ValueError(const std::string& msg) :runtime_error("[Value Error] " + msg) {};
-    };
-
-    /** Used for errors returned by the SQLite API itself */
-    class SQLiteError : public std::runtime_error {
-    public:
-        SQLiteError(const std::string& msg) :runtime_error("[SQLite Error] " + msg) {};
-    };
-
-    /** Map error codes to error messages */
-    const std::map<int, std::string> SQLITE_ERROR_MSG = {
-        { 1, "SQLITE_ERROR: Generic SQLite Error" },
-        { 19, "SQLITE_CONSTRAINT: SQL constrainted violated" }
-    };
-
-    const std::map<int, std::string> SQLITE_EXT_ERROR_MSG = {
-        { 787, "SQLITE_CONSTRAINT_FOREIGNKEY: Foreign key constraint failed" },
-        { 1555, "SQLITE_CONSTRAINT_PRIMARYKEY: Primary key constraint failed" }
-    };
-
     void throw_sqlite_error(const int& error_code,
         const int& ext_error_code=-1);
     ///@}
+    
+    template<>
+    inline void Conn::PreparedStatement::bind(const size_t i, const char* value) {
+        sqlite3_bind_text(
+            this->get_ptr(),    // Pointer to prepared statement
+            i + 1,              // Index of parameter to set
+            value,              // Value to bind
+            strlen(value),      // Size of string in bytes
+            SQLITE_TRANSIENT);  // String destructor
+    }
+
+    template<>
+    inline void Conn::PreparedStatement::bind(const size_t i, const std::string value) {
+        /** Bind text values to the statement
+        *
+        *  **Note:** This function is zero-indexed while
+        *  sqlite3_bind_* is 1-indexed
+        */
+        sqlite3_bind_text(
+            this->get_ptr(),    // Pointer to prepared statement
+            i + 1,              // Index of parameter to set
+            value.c_str(),      // Value to bind
+            value.size(),       // Size of string in bytes
+            SQLITE_TRANSIENT);  // String destructor
+    }
+
+    template<>
+    inline void Conn::PreparedStatement::bind(const size_t i, const int value) {
+        /** Bind integer values to the statement */
+        sqlite3_bind_int(this->get_ptr(), i + 1, value);
+    }
+
+    template<>
+    inline void Conn::PreparedStatement::bind(const size_t i, const long int value) {
+        /** Bind integer values to the statement */
+        sqlite3_bind_int64(this->get_ptr(), i + 1, value);
+    }
+
+    template<>
+    inline void Conn::PreparedStatement::bind(const size_t i, const long long int value) {
+        /** Bind integer values to the statement */
+        sqlite3_bind_int64(this->get_ptr(), i + 1, value);
+    }
+
+    template<>
+    inline void Conn::PreparedStatement::bind(const size_t i, const double value) {
+        /** Bind floating point values to the statement */
+        sqlite3_bind_double(this->get_ptr(), i + 1, value);
+    }
 }

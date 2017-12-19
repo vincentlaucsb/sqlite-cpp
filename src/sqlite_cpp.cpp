@@ -29,7 +29,11 @@ namespace SQLite {
     };
 
     Conn::Conn(const std::string db_name) {
-        Conn::Conn(db_name.c_str());
+        /** Open a connection to a SQLite3 database
+         *  @param[in] db_name Path to SQLite3 database
+         */
+        if (sqlite3_open(db_name.c_str(), this->base->get_ref()))
+            throw SQLiteError("Failed to open database");
     };
 
     void Conn::exec(const std::string query) {
