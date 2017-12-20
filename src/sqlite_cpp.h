@@ -170,6 +170,7 @@ namespace SQLite {
     public:
         Conn(const char * db_name);
         Conn(const std::string db_name);
+        ~Conn();
         void exec(const std::string query);
         Conn::PreparedStatement prepare(const std::string& stmt);
         Conn::ResultSet query(const std::string& stmt);
@@ -178,7 +179,7 @@ namespace SQLite {
         sqlite3* get_ptr();
         std::shared_ptr<conn_base> base =
             std::make_shared<conn_base>(); /** Database handle */
-        char * error_message;              /** Buffer for error messages */
+        char * error_message = nullptr;    /** Buffer for error messages */
     private:
         std::queue<PreparedStatement*> stmts; /** Keep track of prepared statements
                                                *  so we can dealloc them on close() */
@@ -235,5 +236,10 @@ namespace SQLite {
     inline void Conn::PreparedStatement::bind(const size_t i, const double value) {
         /** Bind floating point values to the statement */
         sqlite3_bind_double(this->get_ptr(), i + 1, value);
+    }
+
+    template<>
+    inline void Conn::PreparedStatement::bind(const size_t i, const std::nullptr_t value) {
+        sqlite3_bind_null(this->get_ptr(), i + 1);
     }
 }

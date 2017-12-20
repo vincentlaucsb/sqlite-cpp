@@ -36,6 +36,16 @@ namespace SQLite {
             throw SQLiteError("Failed to open database");
     };
 
+    Conn::~Conn() {
+        /** Free memory given to error message
+         *  **Note**: The connection has its own automatically called destructor
+         *  so it is not called here
+         */
+        if (error_message) {
+            sqlite3_free(error_message);
+        }
+    }
+
     void Conn::exec(const std::string query) {
         /** Execute a query that doesn't return anything
          *  @param[in] query A SQL query
@@ -186,14 +196,23 @@ namespace SQLite {
 
     std::vector<std::string> Conn::ResultSet::get_row() {
         /** After calling next_result(), use this to type-cast
-         *  the next row from a query into a string vector
-         */
+        *  the next row from a query into a string vector
+        *
+        *  NULL values are type-casted to empty strings
+        */
         std::vector<std::string> ret;
         int col_size = this->num_cols();
+        const unsigned char * col_val;
 
         for (int i = 0; i < col_size; i++) {
-            ret.push_back(std::string((char *)
-                sqlite3_column_text(this->get_ptr(), i)));
+            col_val = sqlite3_column_text(this->get_ptr(), i);
+
+            if (col_val) {
+                ret.push_back(std::string((char *)col_val));
+            }
+            else { // NULL pointer
+                ret.push_back("");
+            }
         }
 
         return ret;

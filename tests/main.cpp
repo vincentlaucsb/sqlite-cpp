@@ -56,6 +56,7 @@ TEST_CASE("Prepared Statement Test", "[test_insert_values]") {
     stmt.bind("Matthew Stafford", 25, 9);
     stmt.bind("Drew Brees", 21, 7);
     stmt.bind("Philip Rivers", 24, 10);
+    stmt.bind(nullptr, nullptr, nullptr); // Should be stored as NULLs
     stmt.commit();
 
     // db.exec("COMMIT TRANSACTION");
@@ -63,6 +64,9 @@ TEST_CASE("Prepared Statement Test", "[test_insert_values]") {
     auto results = db.query("SELECT * FROM dillydilly");
     std::vector<std::string> row;
     int i = 0;
+
+    REQUIRE(results.get_col_names() ==
+        std::vector<std::string>({ "Player", "Touchdown", "Interception" }));
     while (results.next()) {
         row = results.get_row();
 
@@ -81,6 +85,10 @@ TEST_CASE("Prepared Statement Test", "[test_insert_values]") {
             break;
         case 4:
             REQUIRE(row == std::vector<std::string>({ "Philip Rivers", "24", "10" }));
+            break;
+        case 5:
+            // Type-cast NULL values to empty strings
+            REQUIRE(row == std::vector<std::string>({ "", "", "" }));
             break;
         }
 
@@ -106,6 +114,7 @@ TEST_CASE("Empty Query Test", "[test_no_results]") {
     auto results = db.query("SELECT * FROM dillydilly");
     std::vector<std::string> row;
     int i = 0;
+
     while (results.next()) {
         row = results.get_row();
         i++;
@@ -114,4 +123,4 @@ TEST_CASE("Empty Query Test", "[test_no_results]") {
     db.close();
     REQUIRE(i == 0);
     REQUIRE(remove("database.sqlite") == 0);
-}   
+}
