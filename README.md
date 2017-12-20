@@ -1,10 +1,6 @@
 ## SQLite for C++
 
-[![Build Status](https://travis-ci.org/vincentlaucsb/sqlite-cpp.svg?branch=master)](https://travis-ci.org/vincentlaucsb/sqlite-cpp)
-
-[![codecov](https://codecov.io/gh/vincentlaucsb/sqlite-cpp/branch/master/graph/badge.svg)](https://codecov.io/gh/vincentlaucsb/sqlite-cpp)
-
-[Documentation](https://vincentlaucsb.github.io/sqlite-cpp/)
+[![Build Status](https://travis-ci.org/vincentlaucsb/sqlite-cpp.svg?branch=master)](https://travis-ci.org/vincentlaucsb/sqlite-cpp) [![codecov](https://codecov.io/gh/vincentlaucsb/sqlite-cpp/branch/master/graph/badge.svg)](https://codecov.io/gh/vincentlaucsb/sqlite-cpp) [(Documentation)](https://vincentlaucsb.github.io/sqlite-cpp/)
 
 SQLite for C++ is a wrapper around the SQLite C API which makes it easier and safer to use.
 Key features of this library are:
@@ -62,3 +58,11 @@ Most basic tasks can be executed with the methods and classes listed below
  * SQLite::Conn::query(): To prepare/execute a query
  * SQLite::Conn::ResultSet
  * SQLite::Conn::ResultSet::next: To advance to the next row
+ 
+ 
+## Dependencies
+The library itself has no dependencies aside from a C++11 capable compiler and the SQLite library. However, a few great third-party tools were used to ensure the library's correctness.
+
+### Test Suite
+ * [Catch](https://github.com/catchorg/Catch2) for unit-testing
+ * Valgrind for memory-leak checking
