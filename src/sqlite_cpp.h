@@ -30,7 +30,7 @@ SOFTWARE.
 
 /** @file */
 
-#include "sqlite3.h"
+#include "../lib/sqlite3.h"
 #include <string.h>
 #include <map>
 #include <queue>
