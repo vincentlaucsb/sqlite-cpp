@@ -81,6 +81,34 @@ namespace SQLite {
         { 1555, "SQLITE_CONSTRAINT_PRIMARYKEY: Primary key constraint failed" }
     };
     
+    /** Return type for SQL queries */
+    class SQLField {
+        struct SQLFieldConcept {
+            virtual ~SQLFieldConcept() {};
+            virtual size_t type() = 0;
+        };
+
+        template<typename T> struct SQLFieldModel : SQLFieldConcept {
+            SQLFieldModel(const T& t) : value(t) {};
+            size_t type(); /**< Return the fundamental SQLite3 type */
+            T value;
+        };
+
+        std::shared_ptr<SQLFieldConcept> value;
+
+    public:
+        template<typename T> SQLField(const T& val) :
+            value(new SQLFieldModel<T>(val)) {};
+        template<typename T> T get() { return ((SQLFieldModel<T>*)value.get())->value; }
+
+        size_t type() { return value.get()->type(); }
+    };
+
+    inline size_t SQLField::SQLFieldModel<long long int>::type() { return SQLITE_INTEGER; }
+    inline size_t SQLField::SQLFieldModel<double>::type() { return SQLITE_FLOAT; }
+    inline size_t SQLField::SQLFieldModel<std::nullptr_t>::type() { return SQLITE_NULL; }
+    inline size_t SQLField::SQLFieldModel<std::string>::type() { return SQLITE_TEXT; }
+
     /** Wrapper over a sqlite3 pointer */
     struct conn_base {
     public:
@@ -191,6 +219,7 @@ namespace SQLite {
         public:
             std::vector<std::string> get_col_names();
             std::vector<std::string> get_row();
+            std::vector<SQLField> get_values();
             int num_cols();
             bool next();
             using PreparedStatement::close;

@@ -248,6 +248,59 @@ namespace SQLite {
         return ret;
     }
 
+    std::vector<SQLField> Conn::ResultSet::get_values() {
+        /** After calling next_result(), use this to type-cast
+        *  the next row from a query into a string vector
+        *
+        *  NULL values are type-casted to empty strings
+        *
+        *  See also: https://sqlite.org/capi3ref.html#sqlite3_column_blob
+        */
+
+        sqlite3_stmt* stmt = this->get_ptr();
+        std::vector<SQLField> ret;
+        int col_size = this->num_cols();
+
+        long long int int_val;
+        double real_val;
+        const unsigned char * text_val;
+
+        for (int i = 0; i < col_size; i++) {
+            switch (sqlite3_column_type(
+                this->get_ptr(), i)) {
+
+            // Cases are integer macros defined in sqlite3.h
+            case SQLITE_INTEGER:
+                int_val = sqlite3_column_int64(stmt, i);
+                ret.push_back(SQLField(int_val));
+                break;
+
+            case SQLITE_FLOAT:
+                real_val = sqlite3_column_double(stmt, i);
+                ret.push_back(SQLField(real_val));
+                break;
+
+            case SQLITE_BLOB: // Not supported yet
+                break;
+
+            case SQLITE_NULL:
+                ret.push_back(SQLField(nullptr));
+                break;
+
+            case SQLITE_TEXT:
+                text_val = sqlite3_column_text(stmt, i);
+                ret.push_back(SQLField(std::string((char *)text_val)));
+                break;
+
+            default:
+                break;
+
+            }
+        }
+
+        return ret;
+    }
+
     int Conn::ResultSet::num_cols() {
         /** Returns the number of columns in a SQL query result */
         return sqlite3_column_count(this->get_ptr());
