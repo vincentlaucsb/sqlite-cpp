@@ -104,9 +104,16 @@ namespace SQLite {
         size_t type() { return value.get()->type(); }
     };
 
+    template<>
     inline size_t SQLField::SQLFieldModel<long long int>::type() { return SQLITE_INTEGER; }
+
+    template<>
     inline size_t SQLField::SQLFieldModel<double>::type() { return SQLITE_FLOAT; }
+
+    template<>
     inline size_t SQLField::SQLFieldModel<std::nullptr_t>::type() { return SQLITE_NULL; }
+
+    template<>
     inline size_t SQLField::SQLFieldModel<std::string>::type() { return SQLITE_TEXT; }
 
     /** Wrapper over a sqlite3 pointer */
