@@ -7,7 +7,7 @@
 `--'   `--'
 
 SQLite for C++ (https://github.com/vincentlaucsb/sqlite-cpp/)
-Copyright(c) 2017 Vincent La and released under the MIT License.
+Copyright(c) 2017-2018 Vincent La and released under the MIT License.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files(the "Software"), to deal
@@ -224,12 +224,10 @@ namespace SQLite {
         return ret;
     }
 
-    std::vector<std::string> Conn::ResultSet::get_row() {
-        /** After calling next_result(), use this to type-cast
-        *  the next row from a query into a string vector
-        *
-        *  NULL values are type-casted to empty strings
-        */
+    bool Conn::ResultSet::next(std::vector<std::string>& row) {
+        /** Fetches the next results from the query, and stores them in row */
+        if (!this->next()) return false;
+
         std::vector<std::string> ret;
         int col_size = this->num_cols();
         const unsigned char * col_val;
@@ -245,17 +243,14 @@ namespace SQLite {
             }
         }
 
-        return ret;
+        row.swap(ret);
+        return true;
     }
 
-    std::vector<SQLField> Conn::ResultSet::get_values() {
-        /** After calling next_result(), use this to type-cast
-        *  the next row from a query into a string vector
-        *
-        *  NULL values are type-casted to empty strings
-        *
-        *  See also: https://sqlite.org/capi3ref.html#sqlite3_column_blob
-        */
+    bool Conn::ResultSet::next(std::vector<SQLField>& row) {
+        /** Fetches the next results from the query, and stores them in row */
+        // https://sqlite.org/capi3ref.html#sqlite3_column_blob
+        if (!this->next()) return false;
 
         sqlite3_stmt* stmt = this->get_ptr();
         std::vector<SQLField> ret;
@@ -298,7 +293,8 @@ namespace SQLite {
             }
         }
 
-        return ret;
+        row.swap(ret);
+        return true;
     }
 
     int Conn::ResultSet::num_cols() {

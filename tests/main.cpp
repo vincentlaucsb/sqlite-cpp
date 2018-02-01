@@ -17,9 +17,7 @@ TEST_CASE("Basic Insert Test", "[test_insert_values]") {
     auto results = db.query("SELECT * FROM dillydilly");
     std::vector<std::string> row;
     int i = 0;
-    while (results.next()) {
-        row = results.get_row();
-
+    while (results.next(row)) {
         switch (i) {
         case 0:
             REQUIRE(row == std::vector<std::string>({ "Tom Brady", "28", "7" }));
@@ -69,9 +67,7 @@ TEST_CASE("Prepared Statement Test", "[test_insert_values]") {
 
     REQUIRE(results.get_col_names() ==
         std::vector<std::string>({ "Player", "Touchdown", "Interception" }));
-    while (results.next()) {
-        row = results.get_row();
-
+    while (results.next(row)) {
         switch (i) {
         case 0:
             REQUIRE(row == std::vector<std::string>({ "Tom Brady", "28", "7" }));
@@ -131,9 +127,7 @@ TEST_CASE("SQLField Test", "[test_sqlfield]") {
 
     REQUIRE(results.get_col_names() ==
         std::vector<std::string>({ "Player", "Touchdown", "Interception" }));
-    while (results.next()) {
-        row = results.get_values();
-
+    while (results.next(row)) {
         if (i <= 4) {
             REQUIRE(row[0].type() == SQLITE_TEXT);
             REQUIRE(row[1].type() == SQLITE_INTEGER);
@@ -187,8 +181,7 @@ TEST_CASE("Empty Query Test", "[test_no_results]") {
     std::vector<std::string> row;
     int i = 0;
 
-    while (results.next()) {
-        row = results.get_row();
+    while (results.next(row)) {
         i++;
     }
 

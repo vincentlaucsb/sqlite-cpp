@@ -7,7 +7,7 @@
 `--'   `--'
 
 SQLite for C++ (https://github.com/vincentlaucsb/sqlite-cpp/)
-Copyright(c) 2017 Vincent La and released under the MIT License.
+Copyright(c) 2017-2018 Vincent La and released under the MIT License.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files(the "Software"), to deal
@@ -228,9 +228,12 @@ namespace SQLite {
             std::vector<std::string> get_row();
             std::vector<SQLField> get_values();
             int num_cols();
-            bool next();
+            bool next(std::vector<std::string>& row);
+            bool next(std::vector<SQLField>& row);
             using PreparedStatement::close;
             using PreparedStatement::PreparedStatement;
+        private:
+            bool next();
         };
 
     public:
