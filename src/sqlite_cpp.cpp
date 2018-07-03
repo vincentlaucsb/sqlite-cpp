@@ -58,7 +58,7 @@ namespace SQLite {
             throw SQLiteError("Failed to open database");
     };
 
-    Conn::Conn(const std::string db_name) {
+    Conn::Conn(const std::string& db_name) {
         /** Open a connection to a SQLite3 database
          *  @param[in] db_name Path to SQLite3 database
          */
@@ -76,7 +76,7 @@ namespace SQLite {
         }
     }
 
-    void Conn::exec(const std::string query) {
+    void Conn::exec(const std::string& query) {
         /** Execute a query that doesn't return anything
          *  @param[in] query A SQL query
          */

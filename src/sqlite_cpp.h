@@ -30,7 +30,10 @@ SOFTWARE.
 
 /** @file */
 
-#include "../lib/sqlite3.h"
+extern "C" {
+    #include "sqlite3.h"
+}
+
 #include <string.h>
 #include <map>
 #include <queue>
@@ -187,7 +190,7 @@ namespace SQLite {
             }
 
             template<typename T>
-            void bind(const size_t i, const T value) {
+            void bind(const size_t i, const T& value) {
                 bind<T>(i, value);
             }
             ///@}
@@ -207,13 +210,13 @@ namespace SQLite {
             /** @name Variadic bind() Helpers */
             ///@{
             template<typename T>
-            void _bind_many(size_t i, T value) {
+            void _bind_many(size_t i, T& value) {
                 bind<T>(i, value);
                 i++;
             }
 
             template<typename T, typename... Args>
-            void _bind_many(size_t i, T value, Args... args) {
+            void _bind_many(size_t i, T& value, Args... args) {
                 bind<T>(i, value);
                 i++;
                 _bind_many(i, args...); // Recurse through templates
@@ -238,9 +241,9 @@ namespace SQLite {
 
     public:
         Conn(const char * db_name);
-        Conn(const std::string db_name);
+        Conn(const std::string& db_name);
         ~Conn();
-        void exec(const std::string query);
+        void exec(const std::string& query);
         Conn::PreparedStatement prepare(const std::string& stmt);
         Conn::ResultSet query(const std::string& stmt);
         void close() noexcept;
@@ -259,7 +262,7 @@ namespace SQLite {
     ///@}
     
     template<>
-    inline void Conn::PreparedStatement::bind(const size_t i, const char* value) {
+    inline void Conn::PreparedStatement::bind(const size_t i, const char*& value) {
         sqlite3_bind_text(
             this->get_ptr(),    // Pointer to prepared statement
             i + 1,              // Index of parameter to set
@@ -269,7 +272,7 @@ namespace SQLite {
     }
 
     template<>
-    inline void Conn::PreparedStatement::bind(const size_t i, const std::string value) {
+    inline void Conn::PreparedStatement::bind(const size_t i, const std::string& value) {
         /** Bind text values to the statement
         *
         *  **Note:** This function is zero-indexed while
@@ -284,31 +287,31 @@ namespace SQLite {
     }
 
     template<>
-    inline void Conn::PreparedStatement::bind(const size_t i, const int value) {
+    inline void Conn::PreparedStatement::bind(const size_t i, const int& value) {
         /** Bind integer values to the statement */
         sqlite3_bind_int(this->get_ptr(), i + 1, value);
     }
 
     template<>
-    inline void Conn::PreparedStatement::bind(const size_t i, const long int value) {
+    inline void Conn::PreparedStatement::bind(const size_t i, const long int& value) {
         /** Bind integer values to the statement */
         sqlite3_bind_int64(this->get_ptr(), i + 1, value);
     }
 
     template<>
-    inline void Conn::PreparedStatement::bind(const size_t i, const long long int value) {
+    inline void Conn::PreparedStatement::bind(const size_t i, const long long int& value) {
         /** Bind integer values to the statement */
         sqlite3_bind_int64(this->get_ptr(), i + 1, value);
     }
 
     template<>
-    inline void Conn::PreparedStatement::bind(const size_t i, const double value) {
+    inline void Conn::PreparedStatement::bind(const size_t i, const double& value) {
         /** Bind floating point values to the statement */
         sqlite3_bind_double(this->get_ptr(), i + 1, value);
     }
 
     template<>
-    inline void Conn::PreparedStatement::bind(const size_t i, const std::nullptr_t value) {
+    inline void Conn::PreparedStatement::bind(const size_t i, const std::nullptr_t& value) {
         sqlite3_bind_null(this->get_ptr(), i + 1);
     }
 }
